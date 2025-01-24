@@ -1,0 +1,69 @@
+# Neo4j Graph Data Science Project Report
+
+## Application of Neo4j Graph Data Science Algorithms and Results
+
+This project utilized various Neo4j Graph Data Science algorithms to analyze a dataset of cases and reactions. The key algorithms and queries applied are as follows:
+
+1. **Schema Visualization**: 
+   - **Command**: `CALL db.schema.visualization()`
+   - **Result**: Provided a graphical representation of the database schema.
+
+2. **Case Count**: 
+   - **Command**: `MATCH (case:Case) RETURN count(case) as case_nbr`
+   - **Result**: Total number of cases in the database.
+
+3. **Case-Reaction Relationships**: 
+   - **Command**: `MATCH (c:Case)-[h:HAS_REACTION]->(r:Reaction) RETURN c,h,r`
+   - **Result**: Displayed all cases with their corresponding reactions.
+
+4. **Reaction Frequency**: 
+   - **Command**: `MATCH (c:Case)-[h:HAS_REACTION]->(r:Reaction) RETURN r.description as reaction, count(c) as case_nbr ORDER BY case_nbr DESC`
+   - **Result**: Ranked reactions by their frequency across cases.
+
+5. **Primary Suspects**: 
+   - **Command**: `MATCH (c:Case)-[ps:IS_PRIMARY_SUSPECT]-> (d:Drug) RETURN c,ps,d`
+   - **Result**: Identified primary suspects related to cases.
+
+6. **Relationship Types**: 
+   - **Command**: `MATCH(c:Case)-[r]->(d:Drug) RETURN DISTINCT type(r) as relationshiptype`
+   - **Result**: Listed distinct relationship types between cases and drugs.
+
+7. **Drug Relationship Counts**: 
+   - **Command**: `MATCH (d:Drug)<-[r:IS_PRIMARY_SUSPECT|IS_SECONDARY_SUSPECT|IS_INTERACTING|IS_CONCOMITANT]-(c:Case) RETURN d.name as drug, COUNT(r) AS relationshipCount ORDER BY relationshipCount DESC LIMIT 15;`
+   - **Result**: Top 15 drugs by the number of relationships with cases.
+
+8. **Degree Centrality**: 
+   - **Command**: `MATCH (d:Drug)<-[r:IS_PRIMARY_SUSPECT|IS_SECONDARY_SUSPECT|IS_INTERACTING|IS_CONCOMITANT]-(c:Case) RETURN d.name as drug, toFloat(COUNT(r))/562 AS DegreeCentrality ORDER BY DegreeCentrality DESC LIMIT 15;`
+   - **Result**: Calculated and ranked degree centrality for drugs.
+
+9. **Age Group Analysis**: 
+   - **Command**: `MATCH (ag:AgeGroup) RETURN ag.ageGroup`
+   - **Result**: Retrieved age groups from the dataset.
+
+10. **Label Propagation Algorithm (LPA)**: 
+    - Various commands were executed to propagate labels through the graph based on outcomes and age groups. This involved setting labels for cases and aggregating the most frequent labels for age groups.
+
+11. **Shortest Path Analysis**: 
+    - **Command**: `MATCH (start:ReportSource {name: 'Health Professional'}), (end:Case {reporterOccupation: 'Hospital'}), p = shortestPath((start)-[*]-(end)) RETURN p LIMIT 50`
+    - **Result**: Found the shortest paths between report sources and cases.
+
+12. **Relationship Type Counts**: 
+    - **Command**: `MATCH ()-[r]->() RETURN type(r) AS relationshipType, count(*) AS count ORDER BY count DESC;`
+    - **Result**: Counted and ranked relationship types in the database.
+
+## Challenges Encountered
+
+1. **Complex Queries**: 
+   - **Challenge**: Some queries took a long time to execute.
+   
+
+2. **Understanding Graph Algorithms**: 
+   - **Challenge**: Learning to apply graph algorithms effectively was initially daunting.
+
+## Tools and Technologies Used
+
+- **Neo4j**: Graph database for storing and querying data.
+- **APOC**: A library for extended functionality in Neo4j.
+- **Cypher**: Query language for querying the Neo4j database.
+
+
