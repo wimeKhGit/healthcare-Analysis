@@ -1,0 +1,68 @@
+name,description,query,id,parentId,isFolder
+queries,,,0,,true
+Exploratory Cypher,,CALL db.schema.visualization(),1,0,false
+has_reaction,,"MATCH (c:Case)-[h:HAS_REACTION]->(r:Reaction)
+RETURN c,h,r",2,0,false
+mostFrequentRelationship,,"MATCH ()-[r]->()
+RETURN type(r) AS relationshipType, count(*) AS count
+ORDER BY count DESC;
+",3,0,false
+case_count_per_reaction,,"MATCH (c:Case)
+RETURN count(c) as case_nbr",4,0,false
+reaction_to_casenbr,,"MATCH (c:Case)-[h:HAS_REACTION]->(r:Reaction)
+RETURN r.description as reaction, count(c) as case_nbr
+order by case_nbr DESC",5,0,false
+_primary_suspect_drag,,"match (c:Case)-[ps:IS_PRIMARY_SUSPECT]-> (d:Drug)
+return c,ps,d",6,0,false
+distinct_type_case_drug,,"match(c:Case)-[r]->(d:Drug)
+return DISTINCT type(r) as relationshiptype
+",7,0,false
+case_drug_relationCount,,"MATCH (d:Drug)<-[r:IS_PRIMARY_SUSPECT|IS_SECONDARY_SUSPECT|IS_INTERACTING|IS_CONCOMITANT]-(c:Case)
+RETURN d.name as drug, COUNT(r) AS relationshipCount
+ORDER by relationshipCount DESC
+LIMIT 15;",8,0,false
+DegreeCentrality,,"MATCH (d:Drug)<-[r:IS_PRIMARY_SUSPECT|IS_SECONDARY_SUSPECT|IS_INTERACTING|IS_CONCOMITANT]-(c:Case)
+RETURN d.name as drug, toFloat(COUNT(r))/562 AS DegreeCentrality
+ORDER by DegreeCentrality DESC
+LIMIT 15;",9,0,false
+ageGroup,,match(ag:AgeGroup) return ag.ageGroup,10,0,false
+LPA,,"
+CALL apoc.periodic.iterate(
+    'MATCH (o:Outcome) RETURN o',
+    'SET o.label = o.name',
+    {batchSize: 1000, parallel: false}
+);
+
+CALL apoc.periodic.iterate(
+    'MATCH (c:Case)-[:RESULTED_IN]->(o:Outcome) RETURN c, o',
+    'SET c.label = o.label',
+    {batchSize: 1000, parallel: false}
+);
+
+
+CALL apoc.periodic.iterate(
+    'MATCH (c:Case)-[:FALLS_UNDER]->(a:AgeGroup) RETURN c, a',
+    'WITH a, c.label AS propagatedLabel 
+     SET a.labels = coalesce(a.labels, []) + propagatedLabel',
+    {batchSize: 1000, parallel: false}
+);
+
+
+CALL apoc.periodic.iterate(
+    'MATCH (a:AgeGroup) RETURN a',
+    'UNWIND a.labels AS label
+     WITH a, label, COUNT(label) AS frequency
+     ORDER BY frequency DESC
+     WITH a, collect({label: label, frequency: frequency}) AS labelStats
+     SET a.mostFrequentLabel = labelStats[0].label',
+    {batchSize: 1000, parallel: false}
+);
+
+
+MATCH (a:AgeGroup)
+RETURN a.name AS ageGroup, a.mostFrequentLabel AS dominantOutcome;
+",11,0,false
+shortestPath,,"MATCH (start:ReportSource {name: 'Health Professional'}), (end:Case {reporterOccupation: 'Hospital'}), 
+      p = shortestPath((start)-[*]-(end))
+RETURN p LIMIT 50
+",12,0,false
